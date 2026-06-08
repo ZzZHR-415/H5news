@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>临界点·北极告急 | H5气候新闻 + 二维码分享</title>
+    <!-- Font Awesome 6 (免费图标库) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- 轻量级二维码生成库 -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Helvetica, sans-serif;
+            background: #f5f7fc;
+            color: #1a2a3f;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* 平滑滚动 */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* 主容器，类似移动端卡片流 */
+        .news-container {
+            max-width: 640px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        /* 进度条 */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: #ff6b4a;
+            z-index: 1000;
+            transition: width 0.1s ease-out;
+            box-shadow: 0 0 6px #ff9770;
+        }
+
+        /* Hero 区域 */
+        .hero {
+            position: relative;
+            height: 88vh;
+            min-height: 560px;
+            background: linear-gradient(0deg, #0b2b3b 0%, #2c5a6e 100%);
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 2rem 1.5rem 3rem;
+        }
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.55;
+            mix-blend-mode: overlay;
+        }
+        .hero-bg-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.7) contrast(1.1);
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            color: white;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+            max-width: 90%;
+            animation: fadeUp 0.9s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        .hero-kicker {
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: rgba(255,255,240,0.2);
+            backdrop-filter: blur(4px);
+            display: inline-block;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        .hero h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.01em;
+        }
+        .hero-sub {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 1.8rem;
+            font-weight: 400;
+            border-left: 3px solid #ff9f6e;
+            padding-left: 0.8rem;
+        }
+        .hero-date {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+        .scroll-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 0.7rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            opacity: 0.7;
+            animation: bounce 2s infinite;
+            z-index: 2;
+        }
+        /* 通用内容块样式 */
+        section {
+            padding: 2.5rem 1.5rem;
+            border-bottom: 1px solid #eef2f5;
+        }
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            position: relative;
+            display: inline-block;
+            background: linear-gradient(135deg, #1a4b6e, #0f2e42);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .section-title i {
+            color: #ff6b4a;
+            margin-right: 8px;
+            background: none;
+            -webkit-background-clip: unset;
+            background-clip: unset;
+            color: #ff6b4a;
+        }
+        .card-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1rem 0 0.5rem;
+            justify-content: space-between;
+        }
+        .stat-card {
+            flex: 1;
+            background: #f0f4fa;
+            border-radius: 28px;
+            padding: 1.2rem 0.8rem;
+            text-align: center;
+            transition: transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.02);
+        }
+        .stat-number {
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: #1c5d7a;
+            line-height: 1.2;
+        }
+        .stat-unit {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #4f6f8f;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            margin-top: 8px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        /* 图表区域 */
+        .chart-container {
+            background: #f8fafd;
+            border-radius: 32px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02);
+            border: 1px solid #eef2f8;
+        }
+        .chart-title {
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+        }
+        .bar-year {
+            width: 48px;
+            font-weight: 600;
+            color: #2c5f8a;
+        }
+        .bar-bg {
+            flex: 1;
+            height: 32px;
+            background: #e2e8f0;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3b8db0, #1f5e7e);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            line-height: 32px;
+        }
+        .data-note {
+            font-size: 0.7rem;
+            color: #6c7e94;
+            margin-top: 12px;
+            text-align: center;
+        }
+        /* 图文卡片 */
+        .impact-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.4rem;
+        }
+        .impact-item {
+            display: flex;
+            gap: 1rem;
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 1rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+            border: 1px solid #ecf3f9;
+            transition: all 0.2s;
+        }
+        .impact-icon {
+            font-size: 2rem;
+            min-width: 52px;
+            text-align: center;
+            color: #e8693e;
+        }
+        .impact-text h4 {
+            font-size: 1.1rem;
+            margin-bottom: 0.3rem;
+        }
+        .impact-text p {
+            color: #3e5a6c;
+            font-size: 0.85rem;
+        }
+        .quote {
+            background: #eef3fc;
+            border-left: 5px solid #ff6b4a;
+            padding: 1.5rem;
+            border-radius: 24px;
+            font-style: normal;
+            margin: 1rem 0;
+        }
+        .quote p {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1e405b;
+        }
+        .quote-author {
+            margin-top: 12px;
+            font-size: 0.8rem;
+            color: #5b7a99;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .action-btn {
+            display: inline-block;
+            background: #1a4b6e;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.8rem;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.1);
+        }
+        .action-btn:active {
+            transform: scale(0.96);
+            background: #0e3b58;
+        }
+        
+        /* 二维码专用区域样式 */
+        .qr-section {
+            background: linear-gradient(135deg, #f1f6fa 0%, #ffffff 100%);
+            border-radius: 32px;
+            margin: 1rem 1.5rem 2rem 1.5rem;
+            padding: 1.8rem 1.2rem;
+            text-align: center;
+            border: 1px solid #dce5ed;
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.05);
+        }
+        .qr-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #1a4b6e;
+        }
+        .qr-desc {
+            font-size: 0.8rem;
+            color: #3e6b8c;
+            margin-bottom: 1.5rem;
+        }
+        .qr-input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 1.6rem;
+            justify-content: center;
+        }
+        .qr-input-group input {
+            flex: 3;
+            min-width: 180px;
+            padding: 12px 18px;
+            border-radius: 60px;
+            border: 1px solid #cbdde9;
+            background: white;
+            font-size: 0.85rem;
+            outline: none;
+            transition: 0.2s;
+            font-family: monospace;
+        }
+        .qr-input-group input:focus {
+            border-color: #ff6b4a;
+            box-shadow: 0 0 0 3px rgba(255,107,74,0.1);
+        }
+        .qr-input-group button {
+            background: #1a4b6e;
+            border: none;
+            padding: 0 24px;
+            border-radius: 60px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .qr-input-group button:active {
+            transform: scale(0.96);
+            background: #0f3b57;
+        }
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px auto;
+            padding: 16px;
+            background: white;
+            border-radius: 32px;
+            display: inline-block;
+            width: auto;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .qr-note {
+            font-size: 0.7rem;
+            background: #eef2f7;
+            display: inline-block;
+            padding: 6px 15px;
+            border-radius: 50px;
+            color: #2c607e;
+            margin-top: 12px;
+        }
+        
+        .share-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            padding: 0.8rem 0 1.2rem;
+            border-top: 1px solid #eef2f5;
+            margin-top: 1rem;
+        }
+        .share-icon {
+            font-size: 1.7rem;
+            color: #6c8dae;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .share-icon:active {
+            color: #ff6b4a;
+        }
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.7rem;
+            color: #8ba0b5;
+            background: #f9fbfd;
+        }
+        /* 滚动动画 */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s cubic-bezier(0.2, 0.9, 0.4, 1), transform 0.7s ease;
+        }
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0);}
+            50% { transform: translateX(-50%) translateY(8px);}
+        }
+        .img-placeholder {
+            border-radius: 28px;
+            overflow: hidden;
+            margin: 1.2rem 0;
+            width: 100%;
+        }
+        .img-placeholder img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .caption {
+            font-size: 0.7rem;
+            color: #6f8faa;
+            text-align: center;
+            margin-top: 6px;
+        }
+        @media (max-width: 450px) {
+            .hero h1 {
+                font-size: 1.9rem;
+            }
+            .stat-number {
+                font-size: 1.5rem;
+            }
+            .section-title {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="progress-bar" id="progressBar"></div>
+<div class="news-container">
+    <!-- Hero 沉浸区 -->
+    <div class="hero">
+        <div class="hero-bg">
+            <img class="hero-bg-img" src="https://picsum.photos/id/104/1200/800" alt="极地冰川融化示意" crossorigin="anonymous">
+        </div>
+        <div class="hero-content">
+            <div class="hero-kicker"><i class="fas fa-temperature-low"></i> 临界报告 · 2026特刊</div>
+            <h1>北极无冰之夏<br>倒计时归零</h1>
+            <div class="hero-sub">2026年6月最新卫星观测：北冰洋海冰面积骤降至历史极值，地球“制冷机”濒临失效。</div>
+            <div class="hero-date"><i class="far fa-calendar-alt"></i> 2026年6月8日 · 气候观察室 <span style="margin-left: auto;"><i class="fas fa-chart-line"></i> 特别深度报道</span></div>
+        </div>
+        <div class="scroll-hint">
+            <i class="fas fa-chevron-down"></i>
+            <span>滑动探索</span>
+        </div>
+    </div>
+
+    <!-- 关键数据卡片 -->
+    <section class="fade-up">
+        <div class="section-title"><i class="fas fa-chart-simple"></i> 关键警讯</div>
+        <div class="card-stats">
+            <div class="stat-card"><div class="stat-number">3.21<span class="stat-unit">百万km²</span></div><div class="stat-label">2026年海冰最小范围</div><div style="font-size:0.7rem; color:#e8693e;">▼ 较1980年减少57%</div></div>
+            <div class="stat-card"><div class="stat-number">+1.9<span class="stat-unit">°C</span></div><div class="stat-label">北极升温幅度 (工业革命前)</div><div style="font-size:0.7rem;">全球平均的3倍</div></div>
+            <div class="stat-card"><div class="stat-number">35<span class="stat-unit">年</span></div><div class="stat-label">预测夏季完全无冰</div><div style="font-size:0.7rem;">比IPCC预估提前15年</div></div>
+        </div>
+        <p style="margin-top: 1rem; font-size: 0.9rem; color: #3e5f7e;">美国国家冰雪数据中心(NSIDC)6月1日紧急通报：北极海冰覆盖面积跌至321万平方公里，突破历史同期最低记录，冰层厚度锐减。</p>
+    </section>
+
+    <!-- 海冰趋势图表 (模拟条形图) -->
+    <section class="fade-up" style="padding-top: 0;">
+        <div class="chart-container">
+            <div class="chart-title"><i class="fas fa-chart-line" style="color:#1f6e8c;"></i> 北冰洋9月海冰范围骤降（1980-2026）</div>
+            <div class="bar-item"><span class="bar-year">1980</span><div class="bar-bg"><div class="bar-fill" style="width: 97%;">7.70</div></div></div>
+            <div class="bar-item"><span class="bar-year">1990</span><div class="bar-bg"><div class="bar-fill" style="width: 84%;">6.45</div></div></div>
+            <div class="bar-item"><span class="bar-year">2000</span><div class="bar-bg"><div class="bar-fill" style="width: 76%;">5.89</div></div></div>
+            <div class="bar-item"><span class="bar-year">2010</span><div class="bar-bg"><div class="bar-fill" style="width: 65%;">5.01</div></div></div>
+            <div class="bar-item"><span class="bar-year">2020</span><div class="bar-bg"><div class="bar-fill" style="width: 52%;">4.08</div></div></div>
+            <div class="bar-item"><span class="bar-year">2026</span><div class="bar-bg"><div class="bar-fill" style="width: 41%; background:#e8693e;">3.21</div></div></div>
+            <div class="data-note"><i class="fas fa-database"></i> 单位：百万平方公里 · 数据综合自NSIDC/NASA卫星观测</div>
+        </div>
+    </section>
+
+    <!-- 影响 & 生态系统 -->
+    <section class="fade-up">
+        <div class="section-title"><i class="fas fa-earth-americas"></i> 蝴蝶效应 · 失控的连锁反应</div>
+        <div class="impact-grid">
+            <div class="impact-item"><div class="impact-icon"><i class="fas fa-paw"></i></div><div class="impact-text"><h4>北极生物圈崩塌</h4><p>海冰锐减导致北极熊捕猎季缩短，海豹栖息地锐减，未来十年北极熊野外种群或将下降40%。</p></div></div>
+            <div class="impact-item"><div class="impact-icon"><i class="fas fa-water"></i></div><div class="impact-text"><h4>极端天气放大器</h4><p>北极增温改变急流形态，加剧北美热浪、欧洲洪灾及东亚寒潮，2026年春季气候异常已造成全球数千亿损失。</p></div></div>
+            <div class="impact-item"><div class="impact-icon"><i class="fas fa-mountain"></i></div><div class="impact-text"><h4>永冻土碳炸弹</h4><p>冻土融化释放巨量甲烷与二氧化碳，形成气候正反馈，科学家警告“引爆点”恐在2030年前触发。</p></div></div>
+        </div>
+        <div class="img-placeholder">
+            <img src="https://picsum.photos/id/15/800/500" alt="北极熊与融化浮冰">
+            <div class="caption"><i class="far fa-image"></i> 斯瓦尔巴群岛附近，海冰消退迫使北极熊长途游泳觅食 | 影像资料 © NPI</div>
+        </div>
+    </section>
+
+    <!-- 专家观点 -->
+    <section class="fade-up">
+        <div class="section-title"><i class="fas fa-microphone-lines"></i> 科学之声</div>
+        <div class="quote">
+            <p>“北极海冰的消亡不再是遥远的未来情景——它正以我们最坏模型预测的上限速度发生。无冰夏季将在2030年前后成为常态，全球必须即刻采取深层次脱碳行动。”</p>
+            <div class="quote-author"><img src="https://randomuser.me/api/portraits/women/68.jpg" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" alt="avatar"> <strong>—— 埃琳娜·汉森博士</strong> ｜ 国际北极科学委员会副主席</div>
+        </div>
+        <div class="quote" style="background:#ffffff; border-left-color:#2a7f6e;">
+            <p>“每融化一吨冰，都是在削弱地球反射太阳辐射的能力。北极变暖已不可逆？不，但我们还能限制它的灾难程度。停止化石燃料扩张是最后的窗口。”</p>
+            <div class="quote-author"><i class="fas fa-user-circle"></i> <strong>王志远 教授</strong> · 中国极地研究中心</div>
+        </div>
+    </section>
+
+    <!-- 时间线/冰芯证据 -->
+    <section class="fade-up">
+        <div class="section-title"><i class="fas fa-clock"></i> 440年最暖时刻</div>
+        <p style="margin-bottom: 1rem;">最新冰芯与沉积物代用资料显示，当前北极夏季温度创过去四个世纪以来最高。2026年5-6月巴伦支海区域异常高温突破4.5℃，直接加速冰层崩解。</p>
+        <div style="background:#eef0f5; border-radius: 60px; padding: 0.4rem 1rem; display: inline-block; font-size:0.8rem;"><i class="fas fa-chart-line"></i> 过去40年，北极变暖速率是地球其他地区的3.7倍</div>
+    </section>
+
+    <!-- 行动与呼吁 -->
+    <section class="fade-up" style="background: linear-gradient(145deg, #e7f0fa 0%, #ffffff 100%); border-radius: 32px 32px 0 0; margin-top: 0.5rem;">
+        <div class="section-title"><i class="fas fa-hand-peace"></i> 临界行动 · 每一度都算数</div>
+        <p style="margin-bottom: 0.5rem;">联合国环境署最新报告指出，倘若全球升温控制在1.5°C以内，北极夏季海冰仍有30%的概率幸存。个人与集体的选择正在重塑未来。</p>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+            <span style="background:#dfe9f2; border-radius: 50px; padding: 0.3rem 1rem; font-size:0.8rem;"><i class="fas fa-leaf"></i> 支持可再生政策</span>
+            <span style="background:#dfe9f2; border-radius: 50px; padding: 0.3rem 1rem; font-size:0.8rem;"><i class="fas fa-bicycle"></i> 低碳出行</span>
+            <span style="background:#dfe9f2; border-radius: 50px; padding: 0.3rem 1rem; font-size:0.8rem;"><i class="fas fa-charging-station"></i> 清洁能源转型</span>
+        </div>
+        <button class="action-btn" id="climateAlertBtn"><i class="fas fa-bell"></i> 加入“守护北极”倡议</button>
+        <p style="font-size: 0.75rem; margin-top: 1rem; color:#5f7f9e;"><i class="fas fa-globe"></i> 已有182,000人签署气候承诺书，呼吁2027年前全球停批新煤电项目。</p>
+    </section>
+
+    <!-- ========= 二维码整合区域：将本篇H5新闻生成分享二维码 ========= -->
+    <div class="qr-section fade-up" id="qrSection">
+        <div class="qr-title">
+            <i class="fas fa-qrcode"></i> 手机扫码 · 沉浸阅读
+        </div>
+        <div class="qr-desc">
+            将当前H5新闻生成二维码，用手机相机扫描即可在移动端获得完整体验
+        </div>
+        <div class="qr-input-group">
+            <input type="text" id="pageUrlInput" placeholder="当前页面地址将自动填入..." value="">
+            <button id="genQrBtn"><i class="fas fa-sync-alt"></i> 生成二维码</button>
+        </div>
+        <div id="qrcode" style="display: flex; justify-content: center;"></div>
+        <div class="qr-note">
+            <i class="fas fa-info-circle"></i> 提示：请将此页面部署至公网服务器（或本地局域网），再使用真实网址生成二维码，手机即可访问。
+        </div>
+    </div>
+
+    <!-- 分享栏 (辅助) -->
+    <div class="share-bar">
+        <div class="share-icon" id="shareWechat"><i class="fab fa-weixin"></i></div>
+        <div class="share-icon" id="shareWeibo"><i class="fab fa-weibo"></i></div>
+        <div class="share-icon" id="shareTwitter"><i class="fab fa-twitter"></i></div>
+        <div class="share-icon" id="copyLink"><i class="fas fa-link"></i></div>
+    </div>
+    <footer>
+        <i class="far fa-newspaper"></i> 北极新闻特别制作 · 数据源：NSIDC, 哥白尼气候变化服务, IPCC AR6<br>
+        本报道为气候紧急叙事·H5交互新闻   #ActOnClimate
+    </footer>
+</div>
+
+<script>
+    // 顶部滚动进度条
+    const progressBar = document.getElementById('progressBar');
+    window.addEventListener('scroll', () => {
+        const winScroll = document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - window.innerHeight;
+        const scrolled = (winScroll / height) * 100;
+        progressBar.style.width = scrolled + '%';
+    });
+
+    // Intersection Observer 滚动淡入动画
+    const fadeElements = document.querySelectorAll('.fade-up');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12, rootMargin: "0px 0px -20px 0px" });
+    fadeElements.forEach(el => observer.observe(el));
+
+    // 按钮提示: 北极倡议
+    const alertBtn = document.getElementById('climateAlertBtn');
+    if (alertBtn) {
+        alertBtn.addEventListener('click', () => {
+            alert("✨ 感谢您的关注！本倡议呼吁个人减少碳足迹、支持气候政策。每一份声援都是改变的开始。");
+        });
+    }
+    
+    // ========= 二维码核心逻辑 =========
+    const urlInput = document.getElementById('pageUrlInput');
+    const genBtn = document.getElementById('genQrBtn');
+    const qrContainer = document.getElementById('qrcode');
+    
+    // 获取当前页面的真实地址 (如果是 http/https 自动填入，否则提醒)
+    let currentUrl = window.location.href;
+    // 禁止 file:// 协议生成无效二维码
+    if (currentUrl.startsWith('file://')) {
+        urlInput.value = '';
+        urlInput.placeholder = '请将页面部署至 https:// 或 http:// 环境后使用';
+        urlInput.style.borderColor = '#ffaa88';
+    } else {
+        urlInput.value = currentUrl;
+    }
+    
+    // 生成二维码函数
+    function generateQRCode(text) {
+        if (!text || text.trim() === '') {
+            alert('⚠️ 请填写有效的网址链接（必须以 http:// 或 https:// 开头）');
+            return false;
+        }
+        // 简单网址格式校验
+        if (!text.match(/^https?:\/\//i)) {
+            alert('❌ 链接必须以 http:// 或 https:// 开头，确保手机可正常访问。');
+            return false;
+        }
+        // 清空原有内容
+        qrContainer.innerHTML = '';
+        // 使用 qrcode-generator 库 (4 容错级别，尺寸自适应)
+        try {
+            // 二维码纠错级别 M (约15%冗余)
+            var qr = qrcode(0, 'M');
+            qr.addData(text);
+            qr.make();
+            var cellSize = 4;   // 每个模块像素
+            var margin = 2;      // 边距格子数
+            var size = qr.getModuleCount();
+            var displaySize = size * cellSize + margin * 2 * cellSize;
+            // 创建 canvas 元素绘制高清二维码
+            var canvas = document.createElement('canvas');
+            canvas.width = displaySize;
+            canvas.height = displaySize;
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, displaySize, displaySize);
+            ctx.fillStyle = '#1a2a3f';
+            for (var row = 0; row < size; row++) {
+                for (var col = 0; col < size; col++) {
+                    if (qr.isDark(row, col)) {
+                        ctx.fillRect(
+                            (col + margin) * cellSize,
+                            (row + margin) * cellSize,
+                            cellSize,
+                            cellSize
+                        );
+                    }
+                }
+            }
+            qrContainer.innerHTML = '';
+            qrContainer.appendChild(canvas);
+            // 增加下方小提示
+            return true;
+        } catch(e) {
+            console.error(e);
+            alert('生成失败，请检查网络或重试');
+            return false;
+        }
+    }
+    
+    // 生成按钮点击事件
+    genBtn.addEventListener('click', () => {
+        let targetUrl = urlInput.value.trim();
+        if (targetUrl === '' && currentUrl && !currentUrl.startsWith('file://')) {
+            targetUrl = currentUrl;
+        }
+        generateQRCode(targetUrl);
+    });
+    
+    // 如果当前已经是有效http/https，自动生成一个二维码方便演示
+    if (currentUrl && !currentUrl.startsWith('file://')) {
+        setTimeout(() => {
+            generateQRCode(currentUrl);
+        }, 300);
+    } else if (currentUrl.startsWith('file://')) {
+        // 展示静态示意（文件协议无法生成有效二维码，但可以展示示例占位）
+        qrContainer.innerHTML = '<div style="padding: 20px; background:#f0f4f9; border-radius: 24px; font-size:0.8rem; text-align:center;"><i class="fas fa-exclamation-triangle"></i> 检测到本地文件访问<br>请将本页面部署至Web服务器后，网址栏会自动填充并生成可扫描二维码。</div>';
+    }
+    
+    // 模拟社交分享提示
+    const shareWechat = document.getElementById('shareWechat');
+    const shareWeibo = document.getElementById('shareWeibo');
+    const shareTwitter = document.getElementById('shareTwitter');
+    const copyLinkBtn = document.getElementById('copyLink');
+    const shareActions = [shareWechat, shareWeibo, shareTwitter, copyLinkBtn];
+    shareActions.forEach(btn => {
+        if(btn) {
+            btn.addEventListener('click', (e) => {
+                const platform = e.currentTarget.id;
+                if(platform === 'copyLink') {
+                    let copyUrl = urlInput.value.trim() || window.location.href;
+                    if(copyUrl.startsWith('file://')) copyUrl = '请先部署至公网再复制链接';
+                    const dummy = document.createElement('input');
+                    dummy.value = copyUrl;
+                    document.body.appendChild(dummy);
+                    dummy.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(dummy);
+                    alert('🔗 链接已复制，可用作分享或生成二维码');
+                } else {
+                    alert(`📢 分享至 ${platform === 'shareWechat' ? '微信' : platform === 'shareWeibo' ? '微博' : 'Twitter'} · 让更多人看见北极真相。`);
+                }
+            });
+        }
+    });
+    
+    // 统计卡片轻反馈
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach(card => {
+        card.addEventListener('click', () => {
+            alert(`ℹ️ 数据源自2026年6月NSIDC紧急公报，北极海冰范围对比1981-2010基准值缩减41%。`);
+        });
+    });
+    // 首屏补可见
+    setTimeout(() => {
+        fadeElements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            if(rect.top < window.innerHeight - 50) {
+                el.classList.add('visible');
+                observer.unobserve(el);
+            }
+        });
+    }, 200);
+</script>
+</body>
+</html>
